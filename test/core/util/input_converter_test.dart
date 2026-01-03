@@ -21,15 +21,20 @@ void main() {
       },
     );
 
-     test(
-      'should return a Failure when the string is not a integer',
-      () {
-        final str = 'abc';
+    test('should return a Failure when the string is not a integer', () {
+      final str = 'abc';
 
-        final result = inputConverter.stringToUnsignedInteger(str);
+      final result = inputConverter.stringToUnsignedInteger(str);
 
-        expect(result, Left(InvalidInputFailure()));
-      },
-    );
+      expect(result, Left(InvalidInputFailure()));
+    });
+
+    test('should return a Failure when the string is a negative integer', () {
+      final str = '-123';
+
+      final result = inputConverter.stringToUnsignedInteger(str);
+
+      expect(result, Left(InvalidInputFailure()));
+    });
   });
 }

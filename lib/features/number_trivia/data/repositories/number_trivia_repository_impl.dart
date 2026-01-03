@@ -1,4 +1,3 @@
-import '../models/number_trivia_model.dart';
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/exceptions.dart';
@@ -8,6 +7,7 @@ import '../../domain/entities/number_trivia.dart';
 import '../../domain/repositories/number_trivia_repository.dart';
 import '../datasources/number_trivia_local_data_source.dart';
 import '../datasources/number_trivia_remote_data_source.dart';
+import '../models/number_trivia_model.dart';
 
 typedef Future<NumberTriviaModel> _ConcreteOrRandomChooser();
 
