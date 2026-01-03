@@ -1,5 +1,6 @@
+import 'package:clean_architecture_weather_app/core/error/exceptions.dart';
 import 'package:dartz/dartz.dart';
-import 'package:meta/meta.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/platform/network_info.dart';
@@ -18,18 +19,34 @@ class NumberTriviaRepositoryImpl implements NumberTriviaRepository {
     required this.localDataSource,
     required this.networkInfo,
   });
-  
+
   @override
-  Future<Either<Failure, NumberTrivia>> getConcreteNumberTrivia(int number) {
-    // TODO: implement getConcreteNumberTrivia
-    throw UnimplementedError();
+  Future<Either<Failure, NumberTrivia>> getConcreteNumberTrivia(
+    int number,
+  ) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final remoteTrivia = await remoteDataSource.getConcreteNumberTrivia(
+          number,
+        );
+        await localDataSource.cacheNumberTrivia(remoteTrivia);
+        return Right(remoteTrivia);
+      } on ServerException {
+        return Left(ServerFailure());
+      }
+    } else {
+      try {
+        final localTrivia = await localDataSource.getLastNumberTrivia();
+        return Right(localTrivia);
+      } on CacheException {
+        return Left(CacheFailure());
+      }
+    }
   }
-  
+
   @override
   Future<Either<Failure, NumberTrivia>> getRandomNumberTrivia() {
     // TODO: implement getRandomNumberTrivia
     throw UnimplementedError();
   }
-
-
 }
