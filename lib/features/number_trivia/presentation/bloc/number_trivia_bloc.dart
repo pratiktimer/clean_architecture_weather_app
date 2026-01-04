@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
-import 'package:clean_architecture_weather_app/core/error/failure.dart';
-import 'package:clean_architecture_weather_app/core/usecases/usecase.dart';
-import 'package:clean_architecture_weather_app/core/util/input_converter.dart';
-import 'package:clean_architecture_weather_app/features/number_trivia/domain/usecases/get_concrete_number_trivia.dart';
-import 'package:clean_architecture_weather_app/features/number_trivia/domain/usecases/get_random_number_trivia.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../../core/util/input_converter.dart';
+import '../../domain/usecases/get_concrete_number_trivia.dart';
+import '../../domain/usecases/get_random_number_trivia.dart';
 import '../../domain/entities/number_trivia.dart';
 import 'package:equatable/equatable.dart';
 
@@ -37,31 +37,27 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
       event.numberString,
     );
 
-    inputEither.fold(
+    // ❌ Handle failure synchronously
+    if (inputEither.isLeft()) {
+      emit(const Error(errorMessage: INVALID_INPUT_FAILURE_MESSAGE));
+      return;
+    }
+
+    // ✅ Safe to proceed
+    final integer = inputEither.getOrElse(() => 0);
+
+    emit(Loading());
+
+    final failureOrTrivia = await getConcreteNumberTrivia(
+      Params(number: integer),
+    );
+
+    failureOrTrivia.fold(
       (failure) {
-        emit(
-          Error(
-            errorMessage: failure is ServerFailure
-                ? SERVER_FAILURE_MESSAGE
-                : CACHE_FAILURE_MESSAGE,
-          ),
-        );
+        emit(const Error(errorMessage: SERVER_FAILURE_MESSAGE));
       },
-      (integer) async {
-        emit(Loading());
-
-        final failureOrTrivia = await getConcreteNumberTrivia(
-          Params(number: integer),
-        );
-
-        failureOrTrivia.fold(
-          (failure) {
-            emit(const Error(errorMessage: SERVER_FAILURE_MESSAGE));
-          },
-          (trivia) {
-            emit(Loaded(trivia: trivia));
-          },
-        );
+      (trivia) {
+        emit(Loaded(trivia: trivia));
       },
     );
   }
@@ -76,9 +72,13 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
 
     failureOrTrivia.fold(
       (failure) {
-        emit(Error(errorMessage: failure is ServerFailure
+        emit(
+          Error(
+            errorMessage: failure is ServerFailure
                 ? SERVER_FAILURE_MESSAGE
-                : CACHE_FAILURE_MESSAGE,));
+                : CACHE_FAILURE_MESSAGE,
+          ),
+        );
       },
       (trivia) {
         emit(Loaded(trivia: trivia));
